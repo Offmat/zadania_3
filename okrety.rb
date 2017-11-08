@@ -21,8 +21,7 @@
 # 3. Gra kończy się gdy wszystkie statki zostały zniszczone.
 require 'pry'
 
-# zastanawiam się, czy jest sens robić klasę row, albo hashe, skoro arr of arrs się w tym miejscy chyba ze swoimi indeksami idealnie nada.
-
+# Pole do gry w statki
 class Field
   def initialize
     @visible = ' '    # to chyba później zmienie na true/false, a co wy świetlać wrzucę gdzie indziej, ale jescze nie wiem
@@ -43,43 +42,52 @@ class Field
 end
 
 
-def print_separator
-  11.times { print '+---' }
-  puts '+'
-end
-
-def print_row(array)
-  (0..10).each do |i|
-    print '| ' + array[i].to_s
-    print ' ' unless array[0].to_s == '10' && i == 0
+# Tablica do gry w okręty
+class Board
+  def initilize
+    @board = generate_board
   end
-  puts '|'
-  print_separator
+
+  def print_separator
+    11.times { print '+---' }
+    puts '+'
+  end
+
+  def print_row(row)
+    (0..10).each do |i|
+      print '| ' + row[i].to_s
+      print ' ' unless row[0].to_s == '10' && i == 0
+    end
+    puts '|'
+    print_separator
+  end
+
+  def print_board
+    print_separator
+    @board.each { |row| print_row(row) }
+  end
+
+  def generate_board
+    board = Array.new(11) {|k| Array.new(11) { |l| l == 0 ? k : Field.new } }
+    board[0] = [' '] + ('A'..'J').to_a
+    board
+  end
+
+  def field(i, j)
+    decoder = Hash.new { |hash, k| hash[k] = ('A'..'J').to_a.index(k) + 1 }
+    @board[j][decoder[i]]
+  end
+
+  def set_ship(i, j)
+    binding.pry
+    field(i, j).set_ship
+  end
+
 end
 
-def print_board(aoa)
-  print_separator
-  aoa.each { |array| print_row(array) }
-end
-
-def generate_board
-  board = Array.new(11) {|k| Array.new(11) {|l| l == 0 ? k : Field.new } }
-  board[0] = [' '] + ('A'..'J').to_a
-  board
-end
-
-def find(board, i, j)
-  decoder = Hash.new { |hash, k| hash[k] = ('A'..'J').to_a[k-1]}
-  board[decoder[j]][i]
-end
-
-def set_ship(board, i, j)
-  board[j][i]
-end
+board = Board.new
+board.set_ship("A", 5)
 
 def check(board, i, j); end
 
 def shot(board, i, j); end
-
-board = generate_board
-print_board(board)
