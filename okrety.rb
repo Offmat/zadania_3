@@ -44,8 +44,8 @@ end
 
 # Tablica do gry w okręty
 class Board
-  def initilize
-    @board = generate_board
+  def initialize
+    generate_board
   end
 
   def print_separator
@@ -68,9 +68,8 @@ class Board
   end
 
   def generate_board
-    board = Array.new(11) {|k| Array.new(11) { |l| l == 0 ? k : Field.new } }
-    board[0] = [' '] + ('A'..'J').to_a
-    board
+    @board = Array.new(11) { |k| Array.new(11) { |l| l == 0 ? k : Field.new } }
+    @board[0] = [' '] + ('A'..'J').to_a
   end
 
   def field(i, j)
@@ -86,7 +85,7 @@ class Board
 end
 
 board = Board.new
-board.set_ship("A", 5)
+board.set_ship('A', 5)
 
 def check(board, i, j); end
 
