@@ -32,6 +32,10 @@ class Field
     @visible
   end
 
+  # def to_s              #developer tool
+  #   @ship ? 'S' : @visible
+  # end
+
   def set_ship
     @ship = true
   end
@@ -44,8 +48,20 @@ end
 
 # Tablica do gry w okręty
 class Board
+  attr_reader :avalible
   def initialize
     generate_board
+    generate_avalible
+  end
+
+  def generate_board
+    @board = Array.new(11) { |k| Array.new(11) { |l| l == 0 ? k : Field.new } }
+    @board[0] = [' '] + ('A'..'J').to_a
+  end
+
+  def generate_avalible
+    @avalible = []
+    ('A'..'J').each { |i| 10.times { |j| @avalible << [i, j + 1] } }
   end
 
   def print_separator
@@ -56,7 +72,7 @@ class Board
   def print_row(row)
     (0..10).each do |i|
       print '| ' + row[i].to_s
-      print ' ' unless row[0].to_s == '10' && i == 0
+      print ' ' unless row[0].to_s == '10' && i.zero?
     end
     puts '|'
     print_separator
@@ -67,26 +83,42 @@ class Board
     @board.each { |row| print_row(row) }
   end
 
-  def generate_board
-    @board = Array.new(11) { |k| Array.new(11) { |l| l == 0 ? k : Field.new } }
-    @board[0] = [' '] + ('A'..'J').to_a
-  end
-
-  def field(i, j)
+  def field(j, i)
     decoder = Hash.new { |hash, k| hash[k] = ('A'..'J').to_a.index(k) + 1 }
-    @board[j][decoder[i]]
+    @board[i][decoder[j]]
   end
 
-  def set_ship(i, j)
+  def perimeter(j, i)
+    (-1..1).each { |k| (-1..1).each { |l| @avalible.delete([(j.ord + k).chr, i + l]) } }
+  end
+
+  def set_ship(j, i)
+    field(j, i).set_ship
+    perimeter(j, i)
+  end
+
+  def shoot(j, i)
+    field(j, i).shoot
+  end
+
+  def generate_ships(n)
+    segment = 1
+    ship = [] << @avalible.sample
+    move = [rand(2), [-1, 1].sample]
     binding.pry
-    field(i, j).set_ship
+    ship[segment] = (ship[segment - 1][rand(2)].ord += [-1, 1].sample).chr
+    puts 'a'
   end
-
 end
 
 board = Board.new
-board.set_ship('A', 5)
-
-def check(board, i, j); end
-
-def shot(board, i, j); end
+board.generate_ships(4)
+# board.set_ship('C', 5)
+# board.print_board
+# p board.avalible
+# board.shoot('A', 1)
+# puts 'po pierwszym strzale'
+# board.print_board
+# board.shoot('C', 5)
+# puts 'po drugim strzale'
+# board.print_board
