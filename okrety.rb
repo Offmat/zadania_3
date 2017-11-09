@@ -28,13 +28,13 @@ class Field
     @ship = false
   end
 
-  def to_s
-    @visible
-  end
-
-  # def to_s              #developer tool
-  #   @ship ? 'S' : @visible
+  # def to_s
+  #   @visible
   # end
+
+  def to_s              #developer tool
+    @ship ? 'S' : @visible
+  end
 
   def set_ship
     @ship = true
@@ -92,7 +92,7 @@ class Board
     (-1..1).each { |k| (-1..1).each { |l| @avalible.delete([(j.ord + k).chr, i + l]) } }
   end
 
-  def set_ship(j, i)
+  def insert_ship(j, i)
     field(j, i).set_ship
     perimeter(j, i)
   end
@@ -101,24 +101,53 @@ class Board
     field(j, i).shoot
   end
 
-  def generate_ships(n)
-    segment = 1
+  def fleet_generator
+    until ship_generator(4); end
+    2.times { until ship_generator(3); end }
+    3.times { until ship_generator(2); end }
+    4.times { until ship_generator(2); end }
+  end
+
+
+  def ship_generator(n)
+    seg = 1
     ship = [] << @avalible.sample
-    move = [rand(2), [-1, 1].sample]
-    binding.pry
-    ship[segment] = (ship[segment - 1][rand(2)].ord += [-1, 1].sample).chr
-    puts 'a'
+    # ship = [['C', 4]]
+    direction = ['v', 'h'].sample   # vertical or horizontal
+    # direction = 'h'
+    movement = [-1, 1].sample       # forward or backward
+    # movement = 1
+    if direction == 'h'
+      while seg < n
+        ship[seg] = [(ship[seg - 1][0].ord + movement).chr, ship[seg - 1][1]]
+        return false if !('A'..'J').include?(ship[seg][0]) || !@avalible.include?(ship[seg])
+        seg += 1
+      end
+    end
+    if direction == 'v'
+      while seg < n
+        ship[seg] = [ship[seg - 1][0], ship[seg - 1][1] + movement]
+        return false if !(1..10).include?(ship[seg][1]) || !@avalible.include?(ship[seg])
+        seg += 1
+      end
+    end
+    ship.each { |segm| insert_ship(segm[0], segm[1]) }
+    true
   end
 end
 
 board = Board.new
-board.generate_ships(4)
-# board.set_ship('C', 5)
+# board.generate_ships(4)
+# board.insert_ship('C', 5)
 # board.print_board
-# p board.avalible
+# p board.avalible2
 # board.shoot('A', 1)
 # puts 'po pierwszym strzale'
 # board.print_board
 # board.shoot('C', 5)
 # puts 'po drugim strzale'
 # board.print_board
+# binding.pry
+board.fleet_generator
+board.print_board
+puts 'a'
