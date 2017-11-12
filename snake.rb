@@ -11,6 +11,24 @@
 require 'pry'
 require 'curses'
 
+class Snake
+  def initialize
+    @segments = 20
+    @localization = []
+  end
+
+  def grow
+    @segments += 1
+  end
+
+  def move(x, y)
+    @localization.insert(0, [x, y])
+    @localization.delete_at(@segments)
+  end
+
+end
+
+
 ROWS = 40
 COLS = 80
 
@@ -33,7 +51,7 @@ window.setpos(20, 40)
 window.box('|', '-', '+')
 window.color_set(2)
 
-
+snake = Snake.new
 input = Curses::KEY_UP
 until (input = window.getch || input) == 'q'
   # window.addstr("current x is #{window.curx}")
@@ -50,7 +68,15 @@ until (input = window.getch || input) == 'q'
     sleep(3)      # to realizuje
     exit(0)
   end
+  tail = snake.move(window.cury, window.curx)
   window.addch('.')
-  window.setpos(window.cury, window.curx - 1)
-  sleep(0.2)
+  head = [window.cury, window.curx - 1]
+  if tail
+    window.color_set(1)
+    window.setpos(tail[0], tail[1])
+    window.addch(' ')
+    window.color_set(2)
+  end
+  window.setpos(head[0], head[1])
+  sleep(0.15)
 end
