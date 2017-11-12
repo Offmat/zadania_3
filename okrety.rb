@@ -179,7 +179,7 @@ class Board
       # binding.pry
       (-1..1).each do |k|
         (-1..1).each { |l| reveal((array[0].ord + k).chr, array[1] + l) }
-       end
+      end
     end
     @fleet -= 1
     end_game if @fleet < 1
