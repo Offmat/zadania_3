@@ -11,26 +11,42 @@
 require 'pry'
 require 'curses'
 
+ROWS = 40
+COLS = 80
+
 class Snake
+  attr_reader :location
   def initialize
-    @segments = 20
-    @localization = []
+    @segments = 2
+    @location = []
   end
 
   def grow
     @segments += 1
   end
 
-  def move(x, y)
-    @localization.insert(0, [x, y])
-    @localization.delete_at(@segments)
+  def move(y, x)
+    @location.insert(0, [y, x])
+    @location.delete_at(@segments)
   end
 
 end
 
+def set_fruit(location, window)
+  loop do
+  x = rand(COLS-2) + 1
+  y = rand(ROWS-2) + 1
+  next if location.include?([y, x])
+  current = [window.cury, window.curx]
+  window.setpos(y, x)
+  window.addch('@')
+  window.setpos(current[0], current[1])
+  break
+  end
+end
 
-ROWS = 40
-COLS = 80
+
+
 
 Curses.init_screen      #nie mam pojęcia po co to wszyscy wrzucają
 Curses.noecho
@@ -51,6 +67,7 @@ window.setpos(20, 40)
 window.box('|', '-', '+')
 window.color_set(2)
 
+set_fruit([], window)
 snake = Snake.new
 input = Curses::KEY_UP
 until (input = window.getch || input) == 'q'
@@ -60,11 +77,15 @@ until (input = window.getch || input) == 'q'
   window.setpos(window.cury - 1, window.curx) if  input == Curses::KEY_UP
   window.setpos(window.cury, window.curx + 1) if  input == Curses::KEY_RIGHT
   window.setpos(window.cury, window.curx - 1) if  input == Curses::KEY_LEFT
+  if window.inch.chr == '@'
+    snake.grow
+    set_fruit(snake.location, window)
+  end
+
   if ['.', '|', '-'].include?(window.inch.chr)
     window.color_set(1)
     # puts "#{window.curx}, #{window.cury}"     # a to w ogóle wypluwał na poprzedzającym zderzenie polu, ale zakładam że to kwestia wpychania putsa do curses
-    window.delch
-    window.addstr('x')      # tego nie chce za cholere zrobic
+    window.addch('x')      # tego nie chce za cholere zrobic
     sleep(3)      # to realizuje
     exit(0)
   end
