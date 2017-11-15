@@ -11,9 +11,10 @@
 require 'pry'
 require 'curses'
 
-ROWS = 30
-COLS = 60
+ROWS = 40
+COLS = 80
 
+# wunż
 class Snake
   attr_reader :location
   def initialize
@@ -40,70 +41,175 @@ def add_chr_at(loc, chr, color_new, color_old, window)
   window.setpos(position[0], position[1])
 end
 
-def set_fruit(location, window)
+def set_random(location, chr, color, window)
   loop do
-  x = rand(COLS - 2) + 1
-  y = rand(ROWS - 2) + 1
-  next if location.include?([y, x])
-  add_chr_at([y, x], '@', 3, 2, window)
-  break
+    y = rand(ROWS - 2) + 1
+    x = rand(COLS - 2) + 1
+    next if location.include?([y, x])
+    add_chr_at([y, x], chr, color, 3, window)
+    break
   end
 end
 
-Curses.init_screen      #nie mam pojęcia po co to wszyscy wrzucają
-Curses.noecho
-Curses.start_color
-Curses.init_pair(1, Curses::COLOR_RED, Curses::COLOR_RED)
-Curses.init_pair(2, Curses::COLOR_GREEN, Curses::COLOR_GREEN)
-Curses.init_pair(3, Curses::COLOR_GREEN, Curses::COLOR_BLACK)
-
-window = Curses::Window.new(ROWS, COLS, 0, 0)
-# window.scrollok(true)
-# window.idlok(true)     #sprawdzić później co robi idlok bo nie łapie do końca
-window.keypad = true
-window.nodelay = true # temu leci i nie czeka
-
-window.color_set(1)
-window.box('.', '.', '.')
-window.color_set(2)
-window.setpos(ROWS / 2, COLS / 2)
-set_fruit([], window)
-snake = Snake.new
-input = Curses::KEY_UP
-
-def move(y, x, window)
+def move_snake(y, x, window)
   window.setpos(window.cury + y, window.curx + x)
 end
 
-until (input = window.getch || input) == 'q'
-  # window.addstr("current x is #{window.curx}")
-  # window.addstr("current begy is #{window.begy}")
-  case input
-  when Curses::KEY_DOWN
-    move(1, 0, window)
-  when Curses::KEY_UP
-    move(-1, 0, window)
-  when Curses::KEY_RIGHT
-    move(0, 1, window)
-  when Curses::KEY_LEFT
-    move(0, -1, window)
-  end
-
-  if window.inch.chr == '@'
-    snake.grow
-    set_fruit(snake.location, window)
-  end
-
-  if window.inch.chr == '.'
-    window.color_set(3)
-    # puts "#{window.curx}, #{window.cury}"     # a to w ogóle wypluwał na poprzedzającym zderzenie polu, ale zakładam że to kwestia wpychania putsa do curses
-    window.addch('x')      # tego nie chce za cholere zrobic
-    sleep(3)      # to realizuje
-    exit(0)
-  end
-  tail = snake.move(window.cury, window.curx)
-  window.addch('.')
-  window.setpos(window.cury, window.curx - 1)
-  add_chr_at(tail, ' ', 3, 2, window) if tail
-  sleep(0.15)
+def die(window)
+  window.color_set(4)
+  window << 'X'
+  window.refresh
+  sleep(3)
+  window.close
 end
+
+def play_snake(window)
+  Curses.curs_set(0)   # niewidzialny kursor
+  window.nodelay = true
+  window.clear
+  window.color_set(2)
+  window.box('.', '.', '.')
+  window.color_set(3)
+  window.setpos(ROWS / 2, COLS / 2)
+  set_random([ROWS / 2, COLS / 2], '@', 4, window)
+  snake = Snake.new
+  input = Curses::KEY_UP
+
+  counter = 0
+  points = 0
+  until (input = window.getch || input) == 'q'
+    # window.addstr("current x is #{window.curx}")
+    # window.addstr("current begy is #{window.begy}")
+    case input
+    when Curses::Key::DOWN
+      move_snake(1, 0, window)
+    when Curses::Key::UP
+      move_snake(-1, 0, window)
+    when Curses::Key::RIGHT
+      move_snake(0, 1, window)
+    when Curses::Key::LEFT
+      move_snake(0, -1, window)
+    end
+
+    if window.inch.chr == '@'
+      snake.grow
+      set_random(snake.location, '@', 4, window)
+      points += 1
+    end
+
+    if counter > 20
+      set_random(snake.location, '.', 2, window) if rand(2) == 1
+      counter = 0
+    end
+
+    die(window) if window.inch.chr == '.'
+
+    tail = snake.move(window.cury, window.curx)
+    window.addch('.')
+    window.setpos(window.cury, window.curx - 1)
+    add_chr_at(tail, ' ', 4, 3, window) if tail
+    counter += 1
+    sleep(0.15)
+  end
+end
+
+Curses.init_screen      # nie mam pojęcia po co to wszyscy wrzucają
+Curses.noecho
+# Curses.raw  # enter dalej nie działa, ale za to nie reaguje nawet na ctrl+c;]
+Curses.start_color
+Curses.nonl
+Curses.init_pair(1, Curses::COLOR_WHITE, Curses::COLOR_BLACK) # text
+Curses.init_pair(2, Curses::COLOR_RED, Curses::COLOR_RED) # frame
+Curses.init_pair(3, Curses::COLOR_GREEN, Curses::COLOR_GREEN) # snake
+Curses.init_pair(4, Curses::COLOR_GREEN, Curses::COLOR_BLACK) # additions
+
+# window.scrollok(true)
+# window.idlok(true)     #sprawdzić później co robi idlok bo nie łapie do końca
+
+def print_on_screen(window, str, y, x = (COLS - str.length)/2)
+  window.setpos(y, x)
+  window.addstr(str)
+end
+
+def print_frame(window)
+  window.color_set(2)
+  window.box('.', '.', '.')
+  window.color_set(1)
+end
+
+def print_highscores(window)
+  window.clear
+  print_frame(window)
+  str = 'Sie robi powoli'
+  print_on_screen(window, str, 4)
+  str = 'press any key to go back'
+  print_on_screen(window, str, 6)
+  menu if window.getch
+end
+
+def introduction(window)
+  window.clear
+  print_frame(window)
+  str = 'Sie robi powoli'
+  print_on_screen(window, str, 4)
+  str = 'press any key to go back'
+  print_on_screen(window, str, 6)
+  menu if window.getch
+end
+
+def print_rules(window)
+  window.clear
+  print_frame(window)
+  str = 'Sie robi powoli'
+  print_on_screen(window, str, 4)
+  str = 'press any key to go back'
+  print_on_screen(window, str, 6)
+  menu if window.getch
+end
+
+def execute(window)
+  case window.cury
+  when 6 then play_snake(window)
+  when 8 then print_highscores(window)
+  when 10 then introduction(window)
+  when 12 then print_rules(window)
+  when 14 then window.close
+  end
+end
+
+def menu
+  window = Curses::Window.new(ROWS, COLS, 0, 0)
+  window.keypad = true
+  print_frame(window)
+  str = 'Welcome in my game. What do you want to do?'
+  print_on_screen(window, str, 3)
+  str = '(please use space bar to confirm, as I am not able to make Enter works)'
+  print_on_screen(window, str, 4)
+  str = "[ ] Let's play SNAKE!!"
+  print_on_screen(window, str, 6, 8)
+  str = '[ ] Show me high scores'
+  print_on_screen(window, str, 8, 8)
+  str = '[ ] Who made this?'
+  print_on_screen(window, str, 10, 8)
+  str = '[ ] What is this madness?'
+  print_on_screen(window, str, 12, 8)
+  str = '[ ] Get me out of here...'
+  print_on_screen(window, str, 14, 8)
+
+  window.setpos(6, 9)
+
+  loop do
+    case window.getch
+    when Curses::Key::UP
+      window.setpos(window.cury - 2, window.curx) if window.cury > 6
+    when Curses::Key::DOWN
+      window.setpos(window.cury + 2, window.curx) if window.cury < 14
+    when ' '
+      execute(window)
+    end
+  end
+end
+
+menu
+
+window.getch
