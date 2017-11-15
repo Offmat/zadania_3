@@ -16,14 +16,19 @@ COLS = 80
 
 # wunż
 class Snake
-  attr_reader :location
+  attr_reader :location, :points
   def initialize
     @segments = 15
     @location = []
+    @points = 0
   end
 
   def grow
     @segments += 1
+  end
+
+  def add_point
+    @points += 1
   end
 
   def move(y, x)
@@ -55,12 +60,47 @@ def move_snake(y, x, window)
   window.setpos(window.cury + y, window.curx + x)
 end
 
-def die(window)
+# def show_points(window, snake)
+#   str = 'press any key to go back'
+#   print_on_screen(window, str, 6)
+# end
+
+def die(window, snake)
   window.color_set(4)
   window << 'X'
   window.refresh
   sleep(3)
-  window.close
+  window.clear
+  print_frame(window)
+  str = "Congratulation!! You have earned #{snake.points} points"
+  print_on_screen(window, str, 4)
+  str = '[ ] Play again'
+  print_on_screen(window, str, 6, 8)
+  str = '[ ] Go to main menu'
+  print_on_screen(window, str, 8, 8)
+  str = '[ ] Exit game'
+  print_on_screen(window, str, 10, 8)
+  window.setpos(6, 9)
+  Curses.curs_set(1)
+  loop do
+    case window.getch
+    when Curses::Key::UP
+      window.setpos(window.cury - 2, window.curx) if window.cury > 6
+    when Curses::Key::DOWN
+      window.setpos(window.cury + 2, window.curx) if window.cury < 10
+    when ' '
+      case window.cury
+      when 6 then play_snake(window)
+      when 8 then menu(window)
+      when 10
+        window.close
+        exit(0)
+      end
+    end
+  end
+
+
+  window.getch
 end
 
 def play_snake(window)
@@ -76,7 +116,6 @@ def play_snake(window)
   input = Curses::KEY_UP
 
   counter = 0
-  points = 0
   until (input = window.getch || input) == 'q'
     # window.addstr("current x is #{window.curx}")
     # window.addstr("current begy is #{window.begy}")
@@ -93,16 +132,18 @@ def play_snake(window)
 
     if window.inch.chr == '@'
       snake.grow
+      snake.add_point
       set_random(snake.location, '@', 4, window)
-      points += 1
     end
 
     if counter > 20
       set_random(snake.location, '.', 2, window) if rand(2) == 1
       counter = 0
     end
-
-    die(window) if window.inch.chr == '.'
+    if window.inch.chr == '.'
+      die(window, snake)
+      input = 'q'
+    end
 
     tail = snake.move(window.cury, window.curx)
     window.addch('.')
@@ -115,7 +156,7 @@ end
 
 Curses.init_screen      # nie mam pojęcia po co to wszyscy wrzucają
 Curses.noecho
-# Curses.raw  # enter dalej nie działa, ale za to nie reaguje nawet na ctrl+c;]
+# Curses.raw  # enter dalej nie działa, ale za to nie reaguje nawet na ctrl+c i trzeba zamykać terminal;]
 Curses.start_color
 Curses.nonl
 Curses.init_pair(1, Curses::COLOR_WHITE, Curses::COLOR_BLACK) # text
@@ -144,7 +185,7 @@ def print_highscores(window)
   print_on_screen(window, str, 4)
   str = 'press any key to go back'
   print_on_screen(window, str, 6)
-  menu if window.getch
+  menu(window) if window.getch
 end
 
 def introduction(window)
@@ -154,7 +195,7 @@ def introduction(window)
   print_on_screen(window, str, 4)
   str = 'press any key to go back'
   print_on_screen(window, str, 6)
-  menu if window.getch
+  menu(window) if window.getch
 end
 
 def print_rules(window)
@@ -164,7 +205,7 @@ def print_rules(window)
   print_on_screen(window, str, 4)
   str = 'press any key to go back'
   print_on_screen(window, str, 6)
-  menu if window.getch
+  menu(window) if window.getch
 end
 
 def execute(window)
@@ -173,13 +214,13 @@ def execute(window)
   when 8 then print_highscores(window)
   when 10 then introduction(window)
   when 12 then print_rules(window)
-  when 14 then window.close
+  when 14
+    window.close
+    exit(0)
   end
 end
 
-def menu
-  window = Curses::Window.new(ROWS, COLS, 0, 0)
-  window.keypad = true
+def menu(window)
   print_frame(window)
   str = 'Welcome in my game. What do you want to do?'
   print_on_screen(window, str, 3)
@@ -210,6 +251,9 @@ def menu
   end
 end
 
-menu
+window = Curses::Window.new(ROWS, COLS, 0, 0)
+window.keypad = true
+
+menu(window)
 
 window.getch
