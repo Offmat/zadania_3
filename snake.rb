@@ -10,8 +10,9 @@
 
 require 'pry'
 require 'curses'
+require 'csv'
 
-ROWS = 40
+ROWS = 30
 COLS = 80
 
 # wunż
@@ -60,28 +61,70 @@ def move_snake(y, x, window)
   window.setpos(window.cury + y, window.curx + x)
 end
 
+
+
 # def show_points(window, snake)
 #   str = 'press any key to go back'
 #   print_on_screen(window, str, 6)
 # end
+
+# str = '[ ] Play again'
+# print_on_screen(window, str, 6, 8)
+# str = '[ ] Go to main menu'
+# print_on_screen(window, str, 8, 8)
+# str = '[ ] Exit game'
+# print_on_screen(window, str, 10, 8)
+
+def save_points(window, points)
+  str = "Enter your name:"
+  print_on_screen(window, str, 6)
+  window.setpos(8, 32)
+  name = window.getstr
+  scores = CSV.read('./high_scores.csv')
+  scores << [name, points]
+  scores.sort! { |x, y| y[1].to_i <=> x[1].to_i }
+  CSV.open('./high_scores.csv', 'w') do |csv|
+    scores.each { |result| csv << result }
+  end
+end
+
+def print_highscores(window)
+  window.clear
+  print_frame(window)
+  str = '-' * 10 + 'HIGH SCORES' + '-' * 10
+  print_on_screen(window, str, 6)
+  line = 8
+  i = 1
+  CSV.foreach('./high_scores.csv') do |row|
+    if i < 10
+      print_on_screen(window, i.to_s + '.', line, 24)
+      print_on_screen(window, row[0], line, 26)
+      print_on_screen(window, row[1], line, 51)
+      print_on_screen(window, 'p', line, 54)
+      line += 1
+      i += 1
+    end
+  end
+  str = 'press any key to go back'
+  print_on_screen(window, str, line + 1)
+  menu(window) if window.getch
+end
 
 def die(window, snake)
   window.color_set(4)
   window << 'X'
   window.refresh
   sleep(3)
+  window.nodelay = false
+  Curses.curs_set(1)
+  Curses.echo
   window.clear
   print_frame(window)
   str = "Congratulation!! You have earned #{snake.points} points"
   print_on_screen(window, str, 4)
-  str = '[ ] Play again'
-  print_on_screen(window, str, 6, 8)
-  str = '[ ] Go to main menu'
-  print_on_screen(window, str, 8, 8)
-  str = '[ ] Exit game'
-  print_on_screen(window, str, 10, 8)
+  save_points(window, snake.points)
+  print_highscores(window)
   window.setpos(6, 9)
-  Curses.curs_set(1)
   loop do
     case window.getch
     when Curses::Key::UP
@@ -98,9 +141,6 @@ def die(window, snake)
       end
     end
   end
-
-
-  window.getch
 end
 
 def play_snake(window)
@@ -158,7 +198,7 @@ Curses.init_screen      # nie mam pojęcia po co to wszyscy wrzucają
 Curses.noecho
 # Curses.raw  # enter dalej nie działa, ale za to nie reaguje nawet na ctrl+c i trzeba zamykać terminal;]
 Curses.start_color
-Curses.nonl
+# Curses.nonl
 Curses.init_pair(1, Curses::COLOR_WHITE, Curses::COLOR_BLACK) # text
 Curses.init_pair(2, Curses::COLOR_RED, Curses::COLOR_RED) # frame
 Curses.init_pair(3, Curses::COLOR_GREEN, Curses::COLOR_GREEN) # snake
@@ -178,15 +218,6 @@ def print_frame(window)
   window.color_set(1)
 end
 
-def print_highscores(window)
-  window.clear
-  print_frame(window)
-  str = 'Sie robi powoli'
-  print_on_screen(window, str, 4)
-  str = 'press any key to go back'
-  print_on_screen(window, str, 6)
-  menu(window) if window.getch
-end
 
 def introduction(window)
   window.clear
@@ -221,23 +252,24 @@ def execute(window)
 end
 
 def menu(window)
+  window.clear
   print_frame(window)
   str = 'Welcome in my game. What do you want to do?'
   print_on_screen(window, str, 3)
-  str = '(please use space bar to confirm, as I am not able to make Enter works)'
+  str = '(use space bar to confirm, since I am not able to make Enter works)'
   print_on_screen(window, str, 4)
   str = "[ ] Let's play SNAKE!!"
-  print_on_screen(window, str, 6, 8)
+  print_on_screen(window, str, 6, 17)
   str = '[ ] Show me high scores'
-  print_on_screen(window, str, 8, 8)
+  print_on_screen(window, str, 8, 17)
   str = '[ ] Who made this?'
-  print_on_screen(window, str, 10, 8)
+  print_on_screen(window, str, 10, 17)
   str = '[ ] What is this madness?'
-  print_on_screen(window, str, 12, 8)
+  print_on_screen(window, str, 12, 17)
   str = '[ ] Get me out of here...'
-  print_on_screen(window, str, 14, 8)
+  print_on_screen(window, str, 14, 17)
 
-  window.setpos(6, 9)
+  window.setpos(6, 18)
 
   loop do
     case window.getch
