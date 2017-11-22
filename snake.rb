@@ -8,6 +8,7 @@
 # (“Graj”, “Autorzy”, “Wyjście”, “Najlepsze wyniki” itp.).
 # Najlepsze wyniki zapisz w pliku tekstowym i odczytaj je w programie.
 
+require 'rubygems'
 require 'pry'
 require 'curses'
 require 'csv'
@@ -198,7 +199,7 @@ Curses.init_screen      # nie mam pojęcia po co to wszyscy wrzucają
 Curses.noecho
 # Curses.raw  # enter dalej nie działa, ale za to nie reaguje nawet na ctrl+c i trzeba zamykać terminal;]
 Curses.start_color
-# Curses.nonl
+Curses.nonl
 Curses.init_pair(1, Curses::COLOR_WHITE, Curses::COLOR_BLACK) # text
 Curses.init_pair(2, Curses::COLOR_RED, Curses::COLOR_RED) # frame
 Curses.init_pair(3, Curses::COLOR_GREEN, Curses::COLOR_GREEN) # snake
