@@ -25,7 +25,7 @@ require 'pry'
 class Field
   attr_reader :ship, :visible, :unit   #dev tool
   def initialize
-    @visible = ' '    # to chyba później zmienie na true/false, a co wy świetlać wrzucę gdzie indziej, ale jescze nie wiem
+    @visible = ' '    # to chyba później zmienie na true/false, a co wy świetlać wrzucę gdzie indziej, ale jescze nie wiem
     @ship = false
   end
 
