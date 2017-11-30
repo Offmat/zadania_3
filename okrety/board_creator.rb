@@ -1,12 +1,11 @@
 require_relative 'game_board.rb'
 require_relative 'ship.rb'
-
+# aaa
 # class that creates game_board and puts ships inside of it.
 class BoardCreator
-  def self.create
-    game_board = GameBoard.new
-    game_board.generate_board
-    new.fleet_generator(game_board)
+  def create
+    game_board = GameBoard.new.tap(&:generate_board)
+    fleet_generator(game_board)
     game_board
   end
 

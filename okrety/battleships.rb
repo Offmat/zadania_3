@@ -2,7 +2,7 @@ require 'pry'
 require_relative 'board_presenter.rb'
 require_relative 'board_creator.rb'
 
-game_board = BoardCreator.create
+game_board = BoardCreator.new.create
 board_presenter = BoardPresenter.new(game_board.board)
 
 board_presenter.greetings

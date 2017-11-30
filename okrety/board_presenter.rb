@@ -52,13 +52,13 @@ class BoardPresenter
     when false
       puts 'You missed the board! Please target inside A1 - J10 board.'.center(45, '-')
     when 0
-      puts 'MISS'.center(45, '-')
+      puts 'MISSED'.center(45, '-')
     when 1
       puts 'HIT'.center(45, '-')
     when 2
       puts 'Battleship is going down!'.center(45, '-')
     when 3
-      puts "You've already shot this field...".center(45, '-')
+      puts "You've already shot this field".center(45, '-')
     end
     return true if var == 2
     false
